@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <!-- Assembly -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Quipbot.Games</AssemblyName>
+    <RootNamespace>Quipbot.Games</RootNamespace>
+  </PropertyGroup>
+
+  <!-- C# compiler -->
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <WarningsAsErrors>CS8600;CS8601;CS8602;CS8603;CS8613;CS8625;CS8629;CS8614;CS8618;CS8619;CS8633</WarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Quipbot.csproj" />
+    <ProjectReference Include="..\WebView2\WebView2.csproj" />
+  </ItemGroup>
+
+</Project>

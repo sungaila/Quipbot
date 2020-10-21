@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Quipbot": {
+      "commandName": "Project",
+      "commandLineArgs": "-game \"Quiplash3Manager\""
+    }
+  }
+}

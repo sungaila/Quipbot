@@ -1,0 +1,30 @@
+﻿<Window x:Class="Quipbot.Browsers.WebView2.WebView2Window"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="WebView2Window"
+        Width="450"
+        Height="800"
+        MinWidth="450"
+        MinHeight="450"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        mc:Ignorable="d">
+    <Grid>
+        <wv2:WebView2 Name="WebView2"
+                      NavigationCompleted="WebView2_NavigationCompleted"
+                      Visibility="Collapsed" />
+
+        <ProgressBar Name="LoadingIndicator"
+                     Focusable="False"
+                     IsHitTestVisible="False"
+                     IsIndeterminate="True"
+                     Opacity="0.2">
+            <ProgressBar.LayoutTransform>
+                <RotateTransform Angle="90" CenterX="0.5" CenterY="0.5" />
+            </ProgressBar.LayoutTransform>
+        </ProgressBar>
+    </Grid>
+</Window>

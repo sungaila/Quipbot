@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Assembly -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>Quipbot.Console</AssemblyName>
+    <RootNamespace>Quipbot.Console</RootNamespace>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <ApplicationManifest>App.manifest</ApplicationManifest>
+    <StartupObject>Quipbot.Console.Program</StartupObject>
+  </PropertyGroup>
+
+  <!-- C# compiler -->
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <WarningsAsErrors>CS8600;CS8601;CS8602;CS8603;CS8613;CS8625;CS8629;CS8614;CS8618;CS8619;CS8633</WarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Quipbot.csproj" />
+    <ProjectReference Include="..\Games\Games.csproj" />
+  </ItemGroup>
+
+</Project>

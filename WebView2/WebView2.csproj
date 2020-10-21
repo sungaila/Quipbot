@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <!-- Assembly -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Quipbot.Browsers.WebView2</AssemblyName>
+    <RootNamespace>Quipbot.Browsers.WebView2</RootNamespace>
+  </PropertyGroup>
+
+  <!-- C# compiler -->
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <WarningsAsErrors>CS8600;CS8601;CS8602;CS8603;CS8613;CS8625;CS8629;CS8614;CS8618;CS8619;CS8633</WarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- NuGet packages -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="0.9.628-prerelease" />
+  </ItemGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Quipbot.csproj" />
+  </ItemGroup>
+
+</Project>
