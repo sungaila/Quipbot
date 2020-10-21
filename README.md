@@ -10,5 +10,5 @@ Currently supported games:
 [<img src="https://jackboxgames.b-cdn.net/wp-content/uploads/2019/06/PP3Tile_Quiplash2.jpg" align="left" height="64" alt="Quiplash 2">](https://www.jackboxgames.com/quiplash-two/)
 [<img src="https://jackboxgames.b-cdn.net/wp-content/uploads/2020/09/q3_websiteTile_v1.jpg" align="left" height="64" alt="Quiplash 3">](https://www.jackboxgames.com/quiplash-three/)
 
-Playing in an OBS stream:
-<img src="https://github.com/sungaila/Quipbot/blob/main/Content/Quipbot.png?" width="390" alt="Screenshot from an OBS stream">
+<br/>
+<img src="https://github.com/sungaila/Quipbot/blob/main/Content/Quipbot.png?" width="500" alt="Screenshot from an OBS stream">
