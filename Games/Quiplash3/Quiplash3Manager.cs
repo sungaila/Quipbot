@@ -1,7 +1,10 @@
-﻿using System;
+﻿using OpenAI.GPT3.ObjectModels;
+using Quipbot.Providers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static OpenAI.GPT3.ObjectModels.Models;
 
 namespace Quipbot.Games.Quiplash3
 {
@@ -15,22 +18,17 @@ namespace Quipbot.Games.Quiplash3
 
         public override int MaxPlayerCount { get => _maxPlayerCount; }
 
-        private static readonly string[] _predefinedNames = new[] { "Taffer", "Mr. Robot", "Kain", "JC Denton", "Evelynn", "Bella Goth", "Wooldoor", "Bobby B", "Wright", "Isaac", "Best Waifu" };
+        private static readonly string[] _predefinedNames = new[] { "Mr. Robot", "Kain", "JC Denton", "Evelynn", "Bella Goth", "Wooldoor", "Bobby B", "Isaac" };
 
-        private static readonly Random _random = new Random();
+        private static readonly string[] _predefinedAdjectives = new[] { "funny", "ridiculous", "nonsensical", "profane", "comical", "insane", "smug", "emoji" };
 
         public override async Task InitPlayersAsync(string roomCode)
         {
-            var names = new List<string>(_predefinedNames);
-
             for (int i = 0; i < Players.Count; i++)
             {
-                var nameIndex = _random.Next(names.Count);
-                Players[i].Name = names.ElementAt(nameIndex);
-                names.RemoveAt(nameIndex);
+                Players[i].Name = _predefinedNames[i];
+                ((OpenAIProvider)Players[i].Behavior.ResultProvider).PromptAdjective = _predefinedAdjectives[i];
             }
-
-            Players[0].Behavior.ResultProvider.Visible = true;
 
             await base.InitPlayersAsync(roomCode);
         }

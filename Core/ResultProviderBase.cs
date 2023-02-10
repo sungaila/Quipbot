@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Quipbot
@@ -34,6 +35,8 @@ namespace Quipbot
         protected abstract Task SetupAsync();
 
         public abstract Task<string?> ProvideResult(string input, TimeSpan? timeout = null);
+
+        public abstract IAsyncEnumerable<string> ProvideResult(string input, int count, TimeSpan? timeout = null);
 
         #region IDisposable
         private bool disposedValue;

@@ -8,44 +8,24 @@
         Unknown,
 
         /// <summary>
-        /// Waiting at the lobby for the game to (re-)start
-        /// </summary>
-        Lobby,
-
-        /// <summary>
         /// Selecting a character
         /// </summary>
         SelectCharacter,
 
         /// <summary>
-        /// Showing the Quiplash 3 logo (as a transition between states)
+        /// Waiting for the round to begin or for other players to finish
         /// </summary>
-        Logo,
+        Waiting,
 
         /// <summary>
-        /// Showing the round to begin
+        /// Writing one or more answers
         /// </summary>
-        Round,
+        Writing,
 
         /// <summary>
-        /// Writing a single answer
+        /// Waiting for the given answer to submit
         /// </summary>
-        SingleAnswer,
-
-        /// <summary>
-        /// Finished with single answer (and waiting for others)
-        /// </summary>
-        SingleAnswerDone,
-
-        /// <summary>
-        /// Writing multiple answers
-        /// </summary>
-        MultipleAnswers,
-
-        /// <summary>
-        /// Finished with multiple answers (and waiting for others)
-        /// </summary>
-        MultipleAnswersDone,
+        SubmittingAnswer,
 
         /// <summary>
         /// Voting on shown answers
@@ -53,8 +33,8 @@
         Vote,
 
         /// <summary>
-        /// Creating or editing custom episodes
+        /// Game finished and can be restarted
         /// </summary>
-        UserGeneratedContent
+        PostGame
     }
 }

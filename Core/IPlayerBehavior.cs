@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Quipbot
 {
@@ -6,6 +7,6 @@ namespace Quipbot
     {
         IResultProvider ResultProvider { get; }
 
-        string? React(IGameObserver gameObserver);
+        Task<string?> ReactAsync(IGameObserver gameObserver);
     }
 }

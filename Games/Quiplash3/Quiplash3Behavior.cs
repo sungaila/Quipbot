@@ -1,20 +1,25 @@
 ﻿using Quipbot.Providers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Quipbot.Games.Quiplash3
 {
-    public class Quiplash3Behavior : PlayerBehaviorBase<CleverbotProvider>
+    public class Quiplash3Behavior : PlayerBehaviorBase<OpenAIProvider>
     {
-        private readonly Random _random = new Random();
+        private const bool IsVotingEnabled = false;
+        private readonly TimeSpan _votingDelay = TimeSpan.FromSeconds(0);
+        private readonly TimeSpan _restartDelay = TimeSpan.FromSeconds(30);
 
-        private string? _lastQuestion = null;
+        private readonly Random _random = new();
 
-        private string? _answer = null;
+        private List<string>? _answers = null;
 
         private DateTime? _restartAt = null;
 
-        public string? React(Quiplash3Observer gameObserver)
+        public async Task<string?> ReactAsync(Quiplash3Observer gameObserver)
         {
             if (gameObserver == null)
                 throw new ArgumentNullException(nameof(gameObserver));
@@ -22,90 +27,70 @@ namespace Quipbot.Games.Quiplash3
             if (gameObserver.PageState != PageState.Connected)
                 return null;
 
-            if (gameObserver.GameState == Quiplash3State.Lobby)
+            if (gameObserver.GameState == Quiplash3State.Waiting)
+            {
+                _answers = null;
+                _restartAt = null;
+            }
+            else if (gameObserver.GameState == Quiplash3State.Writing)
+            {
+                if (gameObserver.Question == null || gameObserver.RequestedAnswers <= 0)
+                    return null;
+
+                _answers ??= await ResultProvider.ProvideResult(gameObserver.Question!, gameObserver.RequestedAnswers, TimeSpan.FromSeconds(20)).ToListAsync();
+
+                try
+                {
+                    var scriptBuilder = new StringBuilder();
+
+                    scriptBuilder.AppendLine(@"var inputs = document.querySelectorAll(""div[class='answer']>textarea"");");
+
+                    for (int i = 0; i < _answers.Count && i < gameObserver.RequestedAnswers; i++)
+                    {
+                        scriptBuilder.AppendLine(@$"
+                                inputs[{i}].value = '{_answers[i].Substring(0, Math.Min(45, _answers[i].Length))}';
+                                inputs[{i}].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            ");
+                    }
+
+                    scriptBuilder.AppendLine(@"document.querySelector(""button[class='submit']"").click();");
+                    return scriptBuilder.ToString();
+                }
+                finally
+                {
+                    _answers = null;
+                }
+            }
+            else if (gameObserver.GameState == Quiplash3State.Vote)
+            {
+                _answers = null;
+
+                if (!IsVotingEnabled || gameObserver.VoteOptions == null || !gameObserver.VoteOptions.Any())
+                    return null;
+
+                var voteId = _random.Next(gameObserver.VoteOptions.Count);
+
+                await Task.Delay(_votingDelay);
+
+                return $"document.querySelectorAll(\"button[class='choice']\")[{voteId}].click();";
+            }
+            else if (gameObserver.GameState == Quiplash3State.PostGame)
             {
                 if (!gameObserver.CanRestartGame)
                     return null;
 
-                _restartAt ??= DateTime.UtcNow.AddSeconds(10);
+                _restartAt ??= DateTime.UtcNow.Add(_restartDelay);
 
                 if (DateTime.UtcNow < _restartAt)
                     return null;
 
                 _restartAt = null;
-                return "document.querySelector(\"button[data-action='PostGame_Continue']\").click();";
-            }
-            else if (gameObserver.GameState == Quiplash3State.Logo)
-            {
-                _answer = null;
-                _restartAt = null;
-            }
-            else if (gameObserver.GameState == Quiplash3State.SingleAnswer)
-            {
-                if (gameObserver.Question == null || _lastQuestion == gameObserver.Question.Value.Key)
-                    return null;
-
-                if (string.IsNullOrWhiteSpace(_answer))
-                    _answer = ResultProvider.ProvideResult(gameObserver.Question.Value.Value, TimeSpan.FromSeconds(20)).GetAwaiter().GetResult();
-
-                if (string.IsNullOrWhiteSpace(_answer))
-                    return null;
-
-                _lastQuestion = gameObserver.Question.Value.Key;
-
-                var script = @$"
-                    var input = document.querySelector(""textarea[id='input-text-textarea']"");
-                    input.value = '{_answer.Substring(0, Math.Min(45, _answer.Length))}';
-                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-
-                    setTimeout(function(){{ document.querySelector(""button[data-action='submit']"").click(); }}, 3000);
-                ";
-
-                _answer = null;
-                return script;
-            }
-            else if (gameObserver.GameState == Quiplash3State.MultipleAnswers)
-            {
-                if (gameObserver.Question == null)
-                    return null;
-
-                string script = string.Empty;
-
-                if (string.IsNullOrWhiteSpace(_answer))
-                    _answer = ResultProvider.ProvideResult(gameObserver.Question.Value.Value, TimeSpan.FromSeconds(20)).GetAwaiter().GetResult();
-
-                if (string.IsNullOrWhiteSpace(_answer))
-                    return null;
-
-                for (int i = 0; i < 3; i++)
-                {
-                    script += @$"
-                        var input = document.querySelectorAll(""textarea[id='input-text-textarea']"")[{i}];
-                        input.value = '{_answer.Substring(_answer.Length / 3 * i, Math.Min(30, _answer.Length / 3))}';
-                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    ";
-                }
-
-                script += $"setTimeout(function(){{ document.querySelector(\"button[data-action='submit']\").click(); }}, 3000);";
-
-                _answer = null;
-                return script;
-            }
-            else if (gameObserver.GameState == Quiplash3State.Vote)
-            {
-                _answer = null;
-
-                if (gameObserver.VoteOptions == null || !gameObserver.VoteOptions.Any())
-                    return null;
-
-                var voteId = _random.Next(gameObserver.VoteOptions.Count);
-
-                return $"document.querySelector(\"button[data-action='choose'][data-index='{gameObserver.VoteOptions.Keys.ElementAt(voteId)}']\").click();";
+                return "document.querySelectorAll(\"div[class='post-game-actions vip']>button\")[0].click();";
             }
 
             return null;
         }
 
-        public override string? React(IGameObserver gameObserver) => React((Quiplash3Observer)gameObserver);
+        public override Task<string?> ReactAsync(IGameObserver gameObserver) => ReactAsync((Quiplash3Observer)gameObserver);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using System;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -94,7 +95,7 @@ namespace Quipbot.Browsers.WebView2
                 {
                     await Window.WebView2.EnsureCoreWebView2Async(
                         await CoreWebView2Environment.CreateAsync(
-                            userDataFolder: "C:\\Users\\David\\AppData\\Local\\Microsoft\\Edge SxS",
+                            userDataFolder: Path.Combine(Path.GetTempPath(), "Quipbot", "WebView2UserData", Guid.NewGuid().ToString()),
                             options: new CoreWebView2EnvironmentOptions(additionalBrowserArguments: "-inprivate", language: "en-US")));
                 };
                 Window.ContentRendered += (s, e) => Window.WebView2.Source = new Uri(Website);
@@ -106,10 +107,7 @@ namespace Quipbot.Browsers.WebView2
                     Window.Hide();
             });
 
-            await Task.Run(() =>
-            {
-                InitEvent.Wait();
-            });
+            await Task.Run(InitEvent.Wait);
         }
 
         public bool IsRunning

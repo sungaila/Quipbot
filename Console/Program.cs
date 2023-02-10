@@ -1,20 +1,22 @@
-﻿using System;
+﻿using Quipbot.Games.Quiplash3;
+using Quipbot.Providers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Quipbot.Console
 {
     public class Program
     {
         [STAThread]
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var entryAssembly = Assembly.GetEntryAssembly();
-            System.Console.WriteLine($"{entryAssembly?.GetName()?.ToString() ?? "Quipbot"}");
+            System.Console.WriteLine($"{Assembly.GetEntryAssembly()?.GetName()?.ToString() ?? "Quipbot"}");
 
             // find game managers via reflection (search each assembly currently loaded in the AppDomain)
-            IEnumerable<Type>? knownGameManagers = GetGameManagerTypes();
+            IEnumerable<Type>? knownGameManagers = GetGameManagerTypes().ToList();
             System.Console.WriteLine($"[{string.Join(", ", knownGameManagers.Select(t => t.Name).OrderBy(t => t))}]");
             System.Console.WriteLine();
 
@@ -36,8 +38,8 @@ namespace Quipbot.Console
             {
                 // instantiate, setup and run the requested game manager
                 using var gameManager = CreateManagerInstance(gameManagerType);
-                gameManager.SetupAsync(roomCode, playerCount.Value).GetAwaiter().GetResult();
-                gameManager.RunAsync().GetAwaiter().GetResult();
+                await gameManager.SetupAsync(roomCode, playerCount.Value);
+                await gameManager.RunAsync();
             }
             catch (Exception ex)
             {
@@ -63,7 +65,7 @@ namespace Quipbot.Console
                         System.Console.Error.WriteLine("ERROR: No game manager specified.");
                         return;
                     }
-                    gameManagerType = knownGameManagers.FirstOrDefault(t => t.Name.ToLower() == args[i + 1].ToLower());
+                    gameManagerType = knownGameManagers?.FirstOrDefault(t => t.Name.ToLower() == args[i + 1].ToLower());
 
                     if (gameManagerType == null)
                         throw new ArgumentException($"Unknown game manager '{args[i + 1]}'.");
@@ -112,8 +114,8 @@ namespace Quipbot.Console
             while (gameManagerType == null)
             {
                 System.Console.Write("Enter game manager: ");
-                var input = System.Console.ReadLine().ToLower();
-                gameManagerType = knownGameManagers.FirstOrDefault(t => t.Name.ToLower() == input);
+                var input = System.Console.ReadLine()?.ToLower();
+                gameManagerType = knownGameManagers?.FirstOrDefault(t => t.Name.ToLower() == input);
             }
 
             while (string.IsNullOrWhiteSpace(roomCode) || roomCode.Length != 4 || roomCode.Any(c => !char.IsLetter(c)))
@@ -134,8 +136,7 @@ namespace Quipbot.Console
         private static IEnumerable<Type> GetGameManagerTypes()
         {
             // force the games assembly to load
-            var unused = typeof(Quipbot.Games.Quiplash2.Quiplash2Player);
-            unused = unused.GetType();
+            typeof(GuidProvider).GetType();
 
             return AppDomain.CurrentDomain
                      .GetAssemblies()

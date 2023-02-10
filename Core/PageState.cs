@@ -5,6 +5,7 @@
         Unknown,
 
         SignIn,
+        SignInDisabled,
         SignInFailed,
         Connected,
         Disconnected,

@@ -57,14 +57,21 @@ namespace Quipbot
                 throw new ArgumentOutOfRangeException(nameof(roomCode), "The room code must be 4 characters long.");
 
             // set room code
-            await BrowserContainer.ExecuteScriptAsync($"document.getElementById('roomcode').value = '{roomCode}'; document.getElementById('roomcode').dispatchEvent(new Event('change', {{ 'bubbles': true }}));");
+            await BrowserContainer.ExecuteScriptAsync($"document.getElementById('roomcode').value = '{roomCode}'; document.getElementById('roomcode').dispatchEvent(new Event('input', {{ 'bubbles': true }}));");
             // set player name
-            await BrowserContainer.ExecuteScriptAsync($"document.getElementById('username').value = '{Name}'; document.getElementById('username').dispatchEvent(new Event('change', {{ 'bubbles': true }}));");
-            // click join button
-            await BrowserContainer.ExecuteScriptAsync("document.getElementById('button-join').click()");
+            await BrowserContainer.ExecuteScriptAsync($"document.getElementById('username').value = '{Name}'; document.getElementById('username').dispatchEvent(new Event('input', {{ 'bubbles': true }}));");
 
             // update game state
             Observer.UpdateState(await BrowserContainer.GetHtmlAsync());
+
+            while (Observer.PageState == PageState.SignInDisabled)
+            {
+                await Task.Delay(BrowserContainer.PollingRate);
+                Observer.UpdateState(await BrowserContainer.GetHtmlAsync());
+            }
+
+            // click join button
+            await BrowserContainer.ExecuteScriptAsync("document.getElementById('button-join').click()");
 
             while (Observer.PageState == PageState.SignIn)
             {
@@ -78,19 +85,16 @@ namespace Quipbot
 
         public async Task RunAsync(CancellationToken cancellationToken = default)
         {
-            await Task.Run(async () =>
+            while (!cancellationToken.IsCancellationRequested && BrowserContainer.IsRunning)
             {
-                while (!cancellationToken.IsCancellationRequested && BrowserContainer.IsRunning)
-                {
-                    Observer.UpdateState(await BrowserContainer.GetHtmlAsync());
-                    var script = Behavior.React(Observer);
+                Observer.UpdateState(await BrowserContainer.GetHtmlAsync());
+                var script = await Behavior.ReactAsync(Observer);
 
-                    if (script != null)
-                        await BrowserContainer.ExecuteScriptAsync(script);
+                if (script != null)
+                    await BrowserContainer.ExecuteScriptAsync(script);
 
-                    await Task.Delay(BrowserContainer.PollingRate, cancellationToken);
-                }
-            });
+                await Task.Delay(BrowserContainer.PollingRate, cancellationToken);
+            }
         }
 
         #region IDisposable

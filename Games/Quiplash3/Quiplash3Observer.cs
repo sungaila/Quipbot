@@ -17,9 +17,11 @@ namespace Quipbot.Games.Quiplash3
 
         public List<string>? AvailableCharacters { get; protected set; }
 
-        public KeyValuePair<string, string>? Question { get; protected set; }
+        public string? Question { get; protected set; }
 
-        public Dictionary<string, string>? VoteOptions { get; protected set; }
+        public int RequestedAnswers { get; protected set; }
+
+        public List<string>? VoteOptions { get; protected set; }
 
         protected override void ResetGameState()
         {
@@ -32,100 +34,62 @@ namespace Quipbot.Games.Quiplash3
             AvailableCharacters = null;
         }
 
-        private static List<string> _characterButtonClasses = new List<string> { "characters", "active", "selected", "disabled" };
-
         protected override void UpdateGameState(HtmlDocument htmlDocument)
         {
-            var divs = htmlDocument.DocumentNode.Descendants("div");
-            var buttons = htmlDocument.DocumentNode.Descendants("button");
+            var gameDiv = htmlDocument.DocumentNode.Descendants("div").FirstOrDefault(n => n.HasClass("quiplash3"));
 
-            var stateController = divs.FirstOrDefault(n => n.HasClass("state-controller"));
-            var stateDiv = stateController?.ChildNodes.SingleOrDefault(n => n.Name == "div" && n.Id != "playerRegion"); // this one tells us the game state!
-
-            if (stateDiv == null)
+            if (gameDiv == null)
             {
                 PageState = PageState.Unknown;
                 return;
             }
 
+            var buttons = gameDiv.Descendants("button").ToList();
+
             PageState = PageState.Connected;
 
             // read player name and character
-            PlayerName = divs.Single(n => n.Id == "playername").InnerText;
-            PlayerCharacter = divs.Single(n => n.Id == "playericon").GetClasses().SingleOrDefault(c => c != "playerIcon");
+            PlayerName = gameDiv.Descendants("span").SingleOrDefault(n => n.HasClass("name"))?.InnerText;
+            PlayerCharacter = gameDiv.Descendants("img").SingleOrDefault(n => n.HasClass("avatar"))?.GetAttributeValue("alt", null);
 
-            if (stateDiv.HasClass("Lobby"))
+            if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("lobby")) is HtmlNode lobbyDiv)
             {
-                GameState = Quiplash3State.Lobby;
-                CanStartGame = buttons.SingleOrDefault(n => n.GetAttributeValue("data-action", null) == "start") != null;
-                CanRestartGame = buttons.SingleOrDefault(n => n.GetAttributeValue("data-action", null) == "PostGame_Continue") != null;
+                GameState = Quiplash3State.SelectCharacter;
+                CanStartGame = buttons.SingleOrDefault(n => n.HasClass("action") && n.InnerText == "Press to Start") != null;
 
-                var characterButtons = buttons.Where(n => n.HasClass("characters"));
-
-                if (characterButtons.Any())
+                if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("avatars")) is HtmlNode avatarsDiv)
                 {
-                    GameState = Quiplash3State.SelectCharacter;
-
-                    PlayerCharacter = characterButtons.SingleOrDefault(n => n.HasClass("selected") || n.HasClass("active"))
-                        ?.GetClasses()?.Single(c => !_characterButtonClasses.Contains(c));
-
-                    AvailableCharacters = characterButtons
-                        .Where(n => !n.HasClass("selected") && !n.HasClass("disabled") && !n.HasClass("active"))
-                        .Select(n => n.GetClasses().Single(c => !_characterButtonClasses.Contains(c))).ToList();
+                    AvailableCharacters = avatarsDiv.Descendants("button")
+                        .Where(n => n.HasClass("avatar"))
+                        .Where(n => !n.HasClass("selected") && !n.Attributes.Any(a => a.Name == "disabled"))
+                        .Select(n => n.Descendants("img").Single().GetAttributeValue("alt", null))
+                        .ToList();
                 }
             }
-            else if (stateDiv.HasClass("Logo"))
+            else if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("waiting")) is HtmlNode waitingDiv)
             {
-                GameState = Quiplash3State.Logo;
-
-                // TODO handle round counter
+                GameState = Quiplash3State.Waiting;
             }
-            else if (stateDiv.HasClass("EnterSingleText"))
+            else if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("writing")) is HtmlNode writingDiv)
             {
-                var doneDiv = divs.SingleOrDefault(n => n.HasClass("enterSingleTextDone"));
+                GameState = Quiplash3State.Writing;
+                Question = writingDiv.Descendants("label").SingleOrDefault(l => l.HasClass("prompt"))?.InnerText;
+                RequestedAnswers = writingDiv.Descendants("textarea").Count();
 
-                if (doneDiv.GetAttributeValue("style", null) == "display: none;")
+                if (buttons.SingleOrDefault(n => n.HasClass("submit"))?.GetAttributes("disabled")?.FirstOrDefault() != null)
                 {
-                    GameState = Quiplash3State.SingleAnswer;
-
-                    var promptDivs = divs.Single(n => n.Id == "prompt").Descendants("div");
-                    var headerDiv = promptDivs.Single(n => n.HasClass("header"));
-                    var questionDiv = headerDiv.NextSibling;
-
-                    Question = new KeyValuePair<string, string>(headerDiv.InnerText, questionDiv.InnerText);
-                }
-                else
-                {
-                    GameState = Quiplash3State.SingleAnswerDone;
+                    GameState = Quiplash3State.SubmittingAnswer;
                 }
             }
-            else if (stateDiv.HasClass("EnterTextList"))
-            {
-                var doneDiv = divs.SingleOrDefault(n => n.HasClass("enterTextListDone"));
-
-                if (doneDiv.GetAttributeValue("style", null) == "display: none;")
-                {
-                    GameState = Quiplash3State.MultipleAnswers;
-
-                    var promptDivs = divs.Single(n => n.Id == "prompt").Descendants("div");
-                    var headerDiv = promptDivs.Single(n => n.HasClass("header"));
-                    var questionDiv = headerDiv.NextSibling;
-
-                    Question = new KeyValuePair<string, string>(headerDiv.InnerText, questionDiv.InnerText);
-                }
-                else
-                {
-                    GameState = Quiplash3State.MultipleAnswersDone;
-                }
-            }
-            else if (stateDiv.HasClass("MakeSingleChoice"))
+            else if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("voting")) is HtmlNode votingDiv)
             {
                 GameState = Quiplash3State.Vote;
-
-                var voteButtons = buttons.Where(n => n.GetAttributeValue("data-action", null) == "choose");
-                VoteOptions = voteButtons.ToDictionary(
-                    n => n.GetAttributeValue("data-index", null),
-                    n => n.HasChildNodes ? string.Join(Environment.NewLine, n.ChildNodes.Select(c => c.InnerText)) : n.InnerText);
+                VoteOptions = votingDiv.Descendants("button").Where(n => n.HasClass("choice")).Select(n => n.InnerText).ToList();
+            }
+            else if (gameDiv.Descendants("div").SingleOrDefault(n => n.HasClass("post-game")) is HtmlNode postgameDiv)
+            {
+                GameState = Quiplash3State.PostGame;
+                CanRestartGame = buttons.SingleOrDefault(n => n.HasClass("action") && n.InnerText == "Same Players") != null;
             }
         }
     }

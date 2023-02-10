@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Quipbot.Providers
@@ -12,7 +13,18 @@ namespace Quipbot.Providers
 
         public override async Task<string?> ProvideResult(string input, TimeSpan? timeout = null)
         {
-            return await Task.Run(() => Guid.NewGuid().ToString());
+            await Task.CompletedTask;
+            return Guid.NewGuid().ToString();
+        }
+
+        public override async IAsyncEnumerable<string> ProvideResult(string input, int count, TimeSpan? timeout = null)
+        {
+            await Task.CompletedTask;
+
+            for (int i = 0; i < count; i++)
+            {
+                yield return Guid.NewGuid().ToString();
+            }
         }
     }
 }

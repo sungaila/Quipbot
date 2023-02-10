@@ -22,7 +22,10 @@ namespace Quipbot
                 var htmlDocument = new HtmlDocument();
                 htmlDocument.LoadHtml(html);
 
-                var divs = htmlDocument.DocumentNode.Descendants("div");
+                var divs = htmlDocument.DocumentNode.Descendants("div").ToList();
+                var inputs = htmlDocument.DocumentNode.Descendants("input").ToList();
+                var spans = htmlDocument.DocumentNode.Descendants("span").ToList();
+                var joinButton = htmlDocument.DocumentNode.Descendants("button").FirstOrDefault(node => node.Id == "button-join");
 
                 // check for disconnected
                 var errorHeader = htmlDocument.DocumentNode.Descendants("h2").FirstOrDefault(n => n.HasClass("swal2-title"));
@@ -32,30 +35,31 @@ namespace Quipbot
                     {
                         PageState = PageState.Disconnected;
                     }
-                    else if (errorHeader.InnerText == "Error")
-                    {
-                        var errorContent = divs.FirstOrDefault(n => n.Id == "swal2-content")?.InnerText;
-
-                        if (errorContent == "Room not found")
-                            PageState = PageState.SignInFailed;
-                    }
 
                     return;
                 }
 
+                // check if the room exists
+                if (spans.SingleOrDefault(node => node.HasClass("status") && node.InnerText == "Room not found") != null)
+                {
+                    PageState = PageState.SignInFailed;
+                    return;
+                }
+
+                // check if the join button is disabled
+                if (joinButton != null && joinButton.Attributes.Any(a => a.Name == "disabled"))
+                {
+                    PageState = PageState.SignInDisabled;
+                    return;
+                }
+
                 // check if the landing page (signin) is visible
-                var signinPage = divs.SingleOrDefault(node => node.Id == SignInPageClass);
-                if (signinPage != null)
+                if (inputs.SingleOrDefault(node => node.Id == "roomcode") != null)
                 {
                     PageState = PageState.SignIn;
                     ResetGameState();
                     return;
                 }
-
-                // swal2-title h2 Disconnected
-
-                // swal2-title h2 Error
-                // swal2-content div Room not found
 
                 ResetGameState();
                 UpdateGameState(htmlDocument);
