@@ -7,6 +7,6 @@ namespace Quipbot
     {
         IResultProvider ResultProvider { get; }
 
-        Task<string?> ReactAsync(IGameObserver gameObserver);
+        Task<string?> ReactAsync(IGameObserver gameObserver, IPlayer player);
     }
 }

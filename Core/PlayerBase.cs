@@ -11,6 +11,8 @@ namespace Quipbot
     {
         public string Name { get; set; }
 
+        public string? Avatar { get; set; }
+
         public IGameObserver Observer { get; }
 
         public IPlayerBehavior Behavior { get; }
@@ -19,9 +21,9 @@ namespace Quipbot
 
         public PlayerBase() : this(Guid.NewGuid().ToString().Substring(0, 12)) { }
 
-        public PlayerBase(string name) : this(name, new TObserver(), new TBehavior(), new TBrowserContainer()) { }
+        public PlayerBase(string name) : this(name, null, new TObserver(), new TBehavior(), new TBrowserContainer()) { }
 
-        public PlayerBase(string name, TObserver observer, TBehavior behavior, TBrowserContainer browserContainer)
+        public PlayerBase(string name, string? avatar, TObserver observer, TBehavior behavior, TBrowserContainer browserContainer)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -33,6 +35,7 @@ namespace Quipbot
                 throw new ArgumentOutOfRangeException(nameof(name), "Name cannot be more than 12 characters.");
 
             Name = name;
+            Avatar = avatar;
             Observer = observer;
             Behavior = behavior;
             BrowserContainer = browserContainer;
@@ -88,7 +91,7 @@ namespace Quipbot
             while (!cancellationToken.IsCancellationRequested && BrowserContainer.IsRunning)
             {
                 Observer.UpdateState(await BrowserContainer.GetHtmlAsync());
-                var script = await Behavior.ReactAsync(Observer);
+                var script = await Behavior.ReactAsync(Observer, this);
 
                 if (script != null)
                     await BrowserContainer.ExecuteScriptAsync(script);

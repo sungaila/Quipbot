@@ -20,7 +20,7 @@ namespace Quipbot
             await ResultProvider.InitAsync();
         }
 
-        public abstract Task<string?> ReactAsync(IGameObserver gameObserver);
+        public abstract Task<string?> ReactAsync(IGameObserver gameObserver, IPlayer player);
 
         #region IDisposable
         private bool disposedValue;

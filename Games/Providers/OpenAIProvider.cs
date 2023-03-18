@@ -51,12 +51,16 @@ namespace Quipbot.Providers
             if (completionResult.Successful)
             {
                 var result = completionResult.Choices.FirstOrDefault()?.Text
-                    .Replace("\"", string.Empty)
                     .Replace("&amp;", "&")
+                    .Replace("&quot;", "\"")
+                    .Replace("\"", string.Empty)
+                    .Replace(Environment.NewLine, " ")
                     .Trim()
-                    .TrimStart('?')
+                    .TrimStart('?', '.', '!')
                     .TrimEnd('.')
                     .Trim();
+
+                Console.Out.WriteLine($"\"{result}\"");
 
                 if (string.IsNullOrWhiteSpace(result))
                     yield break;
@@ -69,7 +73,7 @@ namespace Quipbot.Providers
 
                 foreach (var item in result.Split(';', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    yield return item;
+                    yield return item.Trim();
                 }
 
                 yield break;

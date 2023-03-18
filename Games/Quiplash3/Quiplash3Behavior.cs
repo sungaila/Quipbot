@@ -19,7 +19,7 @@ namespace Quipbot.Games.Quiplash3
 
         private DateTime? _restartAt = null;
 
-        public async Task<string?> ReactAsync(Quiplash3Observer gameObserver)
+        public async Task<string?> ReactAsync(Quiplash3Observer gameObserver, Quiplash3Player player)
         {
             if (gameObserver == null)
                 throw new ArgumentNullException(nameof(gameObserver));
@@ -27,7 +27,17 @@ namespace Quipbot.Games.Quiplash3
             if (gameObserver.PageState != PageState.Connected)
                 return null;
 
-            if (gameObserver.GameState == Quiplash3State.Waiting)
+            if (gameObserver.GameState == Quiplash3State.SelectCharacter)
+            {
+                _answers = null;
+                _restartAt = null;
+
+                if (player.Avatar != null && player.Avatar != gameObserver.PlayerCharacter && gameObserver.AvailableCharacters != null && gameObserver.AvailableCharacters.Contains(player.Avatar))
+                {
+                    return @$"document.querySelector(""button[class='avatar']>img[alt='{player.Avatar}']"").parentNode.click();";
+                }
+            }
+            else if (gameObserver.GameState == Quiplash3State.Waiting)
             {
                 _answers = null;
                 _restartAt = null;
@@ -91,6 +101,6 @@ namespace Quipbot.Games.Quiplash3
             return null;
         }
 
-        public override Task<string?> ReactAsync(IGameObserver gameObserver) => ReactAsync((Quiplash3Observer)gameObserver);
+        public override Task<string?> ReactAsync(IGameObserver gameObserver, IPlayer player) => ReactAsync((Quiplash3Observer)gameObserver, (Quiplash3Player)player);
     }
 }

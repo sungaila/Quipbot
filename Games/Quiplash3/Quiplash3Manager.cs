@@ -18,19 +18,30 @@ namespace Quipbot.Games.Quiplash3
 
         public override int MaxPlayerCount { get => _maxPlayerCount; }
 
-        private static readonly string[] _predefinedNames = new[] { "Mr. Robot", "Kain", "JC Denton", "Evelynn", "Bella Goth", "Wooldoor", "Bobby B", "Isaac" };
-
-        private static readonly string[] _predefinedAdjectives = new[] { "funny", "ridiculous", "nonsensical", "profane", "comical", "insane", "smug", "emoji" };
+        private static readonly PlayerSettings[] _predefinedPlayers = new[]
+        {
+            new PlayerSettings("Mr. Robot", "star-shaped quip", "funny"),
+            new PlayerSettings("Kain", "three-eyed quip", "ridiculous"),
+            new PlayerSettings("JC Denton", "kitten-shaped quip", "nonsensical"),
+            new PlayerSettings("Evelynn", "coffin-shaped quip", "profane"),
+            new PlayerSettings("Bella Goth", "cactus quip", "emotional"),
+            new PlayerSettings("Wooldoor", "moon-shaped quip", "insane"),
+            new PlayerSettings("Bobby ", "teardrop-shaped quip", "smug"),
+            new PlayerSettings("Isaac", "poop-shaped quip", "emoji"),
+        };
 
         public override async Task InitPlayersAsync(string roomCode)
         {
             for (int i = 0; i < Players.Count; i++)
             {
-                Players[i].Name = _predefinedNames[i];
-                ((OpenAIProvider)Players[i].Behavior.ResultProvider).PromptAdjective = _predefinedAdjectives[i];
+                Players[i].Name = _predefinedPlayers[i].Name;
+                Players[i].Avatar = _predefinedPlayers[i].Avatar;
+                ((OpenAIProvider)Players[i].Behavior.ResultProvider).PromptAdjective = _predefinedPlayers[i].Adjective;
             }
 
             await base.InitPlayersAsync(roomCode);
         }
+
+        private record PlayerSettings(string Name, string Avatar, string Adjective);
     }
 }
